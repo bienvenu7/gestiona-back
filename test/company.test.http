@@ -1,0 +1,26 @@
+post http://localhost:7001/v1/company/register
+Content-Type: application/json 
+
+{
+  "name": "Esse Co",
+  "user": {
+    "name": "Albertine Esse",
+    "password": "Colomb2004",
+    "email": "durel7@mail.ru"
+  }
+}
+
+###
+post http://localhost:7001/v1/company/create-user
+Content-Type: application/json 
+
+{
+  "name": "Celine Esse",
+  "role": "ADMIN",
+  "companyId": "7485f25a-ee71-4951-a53d-82b0f728f538",
+  "email": "durhel7@gmail.com"
+}
+
+### delete user
+delete http://localhost:7001/v1/company/delete-user?id=9c23e880-06f6-4825-9d0c-ca437ccd9f15
+Content-Type: application/json 

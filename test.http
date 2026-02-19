@@ -1,0 +1,11 @@
+get http://localhost:7001/health
+
+###
+POST  http://localhost:7001/v1/auth/login
+Content-Type: application/json 
+
+{
+  "email": "durhel7@gmail.com",
+  "password": "zLky4ke7"
+
+}
