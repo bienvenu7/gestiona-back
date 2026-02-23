@@ -3,13 +3,16 @@ import { z } from 'zod';
 // Enums
 export const RoleSchema = z.enum(['OWNER', 'ADMIN', 'MANAGER', 'STAFF']);
 
-export const PaymentTypeSchema = z.enum(['CASH', 'CREDIT']);
+export const PaymentTypeSchema = z.enum(['COMPLET', 'ECHEANCE']);
 
 export const CreditStatusSchema = z.enum(['PENDING', 'PAID', 'OVERDUE']);
 
 //Query Schema
 export const QuerySchema = z.object({
   id: z.uuid().trim(),
+  clientName: z.string().optional(),
+  startDate: z.coerce.date().optional(),
+  endDate: z.coerce.date().optional(),
 });
 
 // User Schema
@@ -112,10 +115,11 @@ export const UpdateProductSchema = CreateProductSchema.omit({
 
 // Cart Schema
 export const CartSchema = z.object({
-  id: z.string().uuid(),
-  orderId: z.string().uuid(),
+  id: z.uuid(),
+  orderId: z.uuid(),
+  productId: z.uuid(),
   productName: z.string().min(1, 'Product name is required'),
-  quantity: z.string().min(1, 'Quantity is required'),
+  quantity: z.number().positive().min(1, 'Quantity is required'),
   totalPrice: z.number().positive('Total price must be positive'),
   createdAt: z.date(),
 });
@@ -123,19 +127,24 @@ export const CartSchema = z.object({
 export const CreateCartSchema = CartSchema.omit({
   id: true,
   createdAt: true,
+  orderId: true,
 });
 
 // Payment Schema
 export const PaymentSchema = z.object({
-  id: z.string().uuid(),
-  orderId: z.string().uuid(),
+  id: z.uuid(),
   amountPaid: z.number().positive('Amount paid must be positive'),
-  paymentDate: z.date(),
+  paymentDate: z.coerce.date(),
+  orderNumber: z.string(),
+  paymentNumber: z.string(),
+  type: PaymentTypeSchema,
+  companyId: z.uuid(),
 });
 
 export const CreatePaymentSchema = PaymentSchema.omit({
   id: true,
   paymentDate: true,
+  paymentNumber: true,
 });
 
 // Credit Schema
@@ -165,23 +174,42 @@ export const UpdateCreditSchema = CreateCreditSchema.omit({
 
 // Order Schema
 export const OrderSchema = z.object({
-  id: z.string().uuid(),
-  companyId: z.string().uuid(),
-  clientName: z.string().min(1, 'Client name is required'),
-  clientEmail: z.string().email('Invalid email address'),
+  id: z.uuid(),
+  companyId: z.uuid(),
+  clientId: z.uuid(),
   totalAmount: z.number().positive('Total amount must be positive'),
-  paymentType: PaymentTypeSchema,
   createdAt: z.date(),
+  credit: z.string().optional(),
 });
 
 export const CreateOrderSchema = OrderSchema.omit({
   id: true,
   createdAt: true,
+  credit: true,
+});
+
+export const CreateOrderWithCart = z.object({
+  order: CreateOrderSchema,
+  carts: z.array(CreateCartSchema),
 });
 
 export const UpdateOrderSchema = CreateOrderSchema.omit({
   companyId: true,
 }).partial();
+
+//Client Schema
+export const ClientSchema = z.object({
+  number: z.string(),
+  id: z.uuid(),
+  companyId: z.uuid(),
+  name: z.string(),
+  createdAt: z.date(),
+});
+
+export const CreateClientSchema = ClientSchema.pick({
+  name: true,
+  number: true,
+});
 
 // Extended schemas with relations (for API responses)
 export const OrderWithRelationsSchema = OrderSchema.extend({
@@ -196,28 +224,63 @@ export const CompanyWithRelationsSchema = CompanySchema.extend({
   orders: z.array(OrderSchema),
 });
 
+//
+
 // Type exports
+
+// Enums
 export type Role = z.infer<typeof RoleSchema>;
 export type PaymentType = z.infer<typeof PaymentTypeSchema>;
 export type CreditStatus = z.infer<typeof CreditStatusSchema>;
+
+// Query
+export type Query = z.infer<typeof QuerySchema>;
+
+// User
+export type User = z.infer<typeof UserSchema>;
+export type CreateUser = z.infer<typeof CreateUserSchema>;
+export type CreateUserFromOwner = z.infer<typeof CreateUserFromOwner>;
+export type CreateUserForCompany = z.infer<typeof CreateUserForCompanySchema>;
+export type LoginUser = z.infer<typeof loginUserSchema>;
+export type UpdateUser = z.infer<typeof UpdateUserSchema>;
+export type UpdateUserPassword = z.infer<typeof UpdateUserPasswordSchema>;
+
+// Company
 export type Company = z.infer<typeof CompanySchema>;
 export type CreateCompany = z.infer<typeof CreateCompanySchema>;
 export type UpdateCompany = z.infer<typeof UpdateCompanySchema>;
-export type User = z.infer<typeof UserSchema>;
-export type CreateUser = z.infer<typeof CreateUserSchema>;
-export type UpdateUser = z.infer<typeof UpdateUserSchema>;
+
+// Hash
+export type Hash = z.infer<typeof HashSchema>;
+
+// Product
 export type Product = z.infer<typeof ProductSchema>;
 export type CreateProduct = z.infer<typeof CreateProductSchema>;
+export type CreateProductsByXml = z.infer<typeof CreateProductsByXml>;
 export type UpdateProduct = z.infer<typeof UpdateProductSchema>;
+
+// Cart
 export type Cart = z.infer<typeof CartSchema>;
 export type CreateCart = z.infer<typeof CreateCartSchema>;
+
+// Payment
 export type Payment = z.infer<typeof PaymentSchema>;
 export type CreatePayment = z.infer<typeof CreatePaymentSchema>;
+
+// Credit
 export type Credit = z.infer<typeof CreditSchema>;
 export type CreateCredit = z.infer<typeof CreateCreditSchema>;
 export type UpdateCredit = z.infer<typeof UpdateCreditSchema>;
+
+// Order
 export type Order = z.infer<typeof OrderSchema>;
 export type CreateOrder = z.infer<typeof CreateOrderSchema>;
 export type UpdateOrder = z.infer<typeof UpdateOrderSchema>;
+
+// Client
+export type Client = z.infer<typeof ClientSchema>;
+export type CreateClient = z.infer<typeof CreateClientSchema>;
+
+// Extended
 export type OrderWithRelations = z.infer<typeof OrderWithRelationsSchema>;
 export type CompanyWithRelations = z.infer<typeof CompanyWithRelationsSchema>;

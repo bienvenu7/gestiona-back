@@ -132,6 +132,10 @@ export const getProducts = async (req: Request, res: Response) => {
       name: true,
       sku: true,
       stockQuantity: true,
+      id: true,
+    },
+    orderBy: {
+      createdAt: 'desc',
     },
   });
 

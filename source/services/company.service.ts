@@ -5,6 +5,7 @@ import {
   createUser,
   deleteUser,
   updateUserStatus,
+  getUsers,
 } from '../controllers/company.controller';
 import { validateRequest } from '../middlewares/error.middleware';
 import {
@@ -14,6 +15,7 @@ import {
   QuerySchema,
   UpdateUserSchema,
 } from '../schema/company.schema';
+import { isAuhenticated } from '../middlewares/authentication';
 
 const router = express.Router();
 
@@ -25,18 +27,28 @@ router.post(
 
 router.post(
   '/create-user',
+  isAuhenticated,
   validateRequest({ body: CreateUserFromOwner }),
   createUser
 );
 
+router.get(
+  '/users',
+  isAuhenticated,
+  validateRequest({ query: QuerySchema }),
+  getUsers
+);
+
 router.delete(
   '/delete-user',
+  isAuhenticated,
   validateRequest({ query: QuerySchema }),
   deleteUser
 );
 
 router.patch(
   '/update-user',
+  isAuhenticated,
   validateRequest({ query: QuerySchema, body: UpdateUserSchema }),
   updateUserStatus
 );

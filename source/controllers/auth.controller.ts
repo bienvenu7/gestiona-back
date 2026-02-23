@@ -138,6 +138,7 @@ export const refrehToken = async (
       email: payload.email,
       role: payload.role,
       userId: payload.userId,
+      companyId: payload.companyId,
     },
     env.get().JWT_SECRET,
     60 * 60 * 8

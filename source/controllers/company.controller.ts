@@ -200,14 +200,19 @@ export const createUser = async (
 
   const hashPassword = hashOtp(password);
 
-  const { id: user_id } = await prisma.user.create({
+  const user = await prisma.user.create({
     data: { ...userData, password: hashPassword },
     select: {
       id: true,
+      email: true,
+      companyId: true,
+      name: true,
+      role: true,
+      createdAt: true,
     },
   });
 
-  if (!user_id) {
+  if (!user) {
     return next(new AppError("Une erreur inconnue s'est produite.", 405));
   }
 
@@ -216,7 +221,7 @@ export const createUser = async (
   if (sendHashToUser === 'failed') {
     await prisma.user.delete({
       where: {
-        id: user_id,
+        id: user.id,
       },
     });
 
@@ -228,9 +233,28 @@ export const createUser = async (
     );
   }
 
-  return res
-    .status(201)
-    .json({ message: 'Un nouvel utilisateur a été créé avec succèss.' });
+  return res.status(201).json(user);
+};
+
+export const getUsers = async (req: Request, res: Response) => {
+  const { id: companyId } = QuerySchema.parse(req.query);
+
+  const users = await prisma.user.findMany({
+    where: { companyId },
+    select: {
+      id: true,
+      email: true,
+      companyId: true,
+      name: true,
+      role: true,
+      createdAt: true,
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+
+  return res.status(200).json(users);
 };
 
 export const deleteUser = async (

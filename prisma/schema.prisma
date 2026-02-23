@@ -19,6 +19,7 @@ model Company {
   users     User[]
   products  Product[]
   orders    Order[]
+  clients   Client[]
   createdAt DateTime  @default(now())
 }
 
@@ -58,11 +59,20 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
+model Client {
+  id        String   @id @unique @default(uuid())
+  companyId String
+  number    String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  company   Company  @relation(fields: [companyId], references: [id])
+}
+
 model Product {
   id            String   @id @unique @default(uuid())
   companyId     String
   company       Company  @relation(fields: [companyId], references: [id])
-  name          String   @unique
+  name          String
   sku           String   @unique
   price         Float
   stockQuantity Int
@@ -71,41 +81,46 @@ model Product {
 }
 
 model Order {
-  id          String      @id @unique @default(uuid())
+  id          String    @id @unique @default(uuid())
   companyId   String
-  company     Company     @relation(fields: [companyId], references: [id])
-  clientName  String
-  clientEmail String
+  company     Company   @relation(fields: [companyId], references: [id])
   totalAmount Float
-  paymentType PaymentType
   payments    Payment[]
-  credit      Credit?
-  createdAt   DateTime    @default(now())
+  createdAt   DateTime  @default(now())
   products    Cart[]
+  clientId    String
+  orderNumber String    @unique
+  credit      Credit?
+  status      Status    @default(WAITING)
+  paidAmount  Float     @default(0)
+
+  @@index([clientId])
 }
 
 model Cart {
   id          String   @id @unique @default(uuid())
   order       Order    @relation(fields: [orderId], references: [id])
   orderId     String
+  productId   String
   productName String
-  quantity    String
+  quantity    Int
   totalPrice  Float
   createdAt   DateTime @default(now())
 }
 
 model Payment {
-  id          String   @id @unique @default(uuid())
-  orderId     String   @unique
-  order       Order    @relation(fields: [orderId], references: [id])
-  amountPaid  Float
-  paymentDate DateTime @default(now())
+  id            String      @id @unique @default(uuid())
+  order         Order       @relation(fields: [orderNumber], references: [orderNumber])
+  amountPaid    Float
+  paymentDate   DateTime    @default(now())
+  orderNumber   String
+  paymentNumber String      @unique
+  type          PaymentType @default(COMPLET)
+  companyId     String
 }
 
 model Credit {
   id              String       @id @default(uuid())
-  orderId         String       @unique
-  order           Order        @relation(fields: [orderId], references: [id])
   totalAmount     Float
   paidAmount      Float
   remainingAmount Float
@@ -113,6 +128,8 @@ model Credit {
   status          CreditStatus
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
+  orderNumber     String       @unique
+  order           Order?       @relation(fields: [orderNumber], references: [orderNumber])
 }
 
 enum Role {
@@ -123,12 +140,19 @@ enum Role {
 }
 
 enum PaymentType {
-  CASH
-  CREDIT
+  COMPLET
+  ECHEANCE
 }
 
 enum CreditStatus {
   PENDING
   PAID
   OVERDUE
+}
+
+enum Status {
+  FINISH
+  PARTIAL
+  WAITING
+  CANCEL
 }

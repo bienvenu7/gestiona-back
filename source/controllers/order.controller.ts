@@ -1,0 +1,339 @@
+import type { Request, Response, NextFunction } from 'express';
+import {
+  CreateOrderWithCart,
+  CreatePaymentSchema,
+  QuerySchema,
+} from '../schema/company.schema';
+import { prisma } from '../config/db.config';
+import { AppError } from '../utils/app.error';
+import { io } from '../server';
+
+export const createOrder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { carts, order } = CreateOrderWithCart.parse(req.body);
+
+  //verification du stock des produits
+
+  const findProducts = await prisma.product.findMany({
+    where: {
+      id: { in: carts.map(c => c.productId) },
+    },
+    select: {
+      id: true,
+      stockQuantity: true,
+      name: true,
+    },
+  });
+
+  const productMap = new Map(findProducts.map(p => [p.id, p]));
+
+  const invalidItem = carts.find(cart => {
+    const product = productMap.get(cart.productId);
+    return !product || cart.quantity > product.stockQuantity;
+  });
+
+  if (invalidItem) {
+    const product = productMap.get(invalidItem.productId);
+
+    return next(
+      new AppError(
+        `Nous n'avons plus assez de stock de ${product?.stockQuantity}`,
+        400
+      )
+    );
+  }
+
+  //creation de l'ordre
+
+  const orderNumber = new Date().getTime().toString();
+
+  const createOrder = await prisma.order.create({
+    data: {
+      ...order,
+      orderNumber,
+      products: {
+        createMany: { data: carts, skipDuplicates: true },
+      },
+    },
+    select: {
+      products: {
+        select: {
+          productName: true,
+          quantity: true,
+        },
+      },
+      orderNumber: true,
+      totalAmount: true,
+      paidAmount: true,
+      status: true,
+      createdAt: true,
+    },
+  });
+
+  io.to(`${order.companyId}`).emit('order-created', createOrder);
+
+  return res.status(201).json(createOrder);
+};
+
+export const getCompanyOrders = async (req: Request, res: Response) => {
+  const { id, clientName, endDate, startDate } = QuerySchema.parse(req.query);
+
+  if (clientName !== undefined && startDate && endDate) {
+    const orders = await prisma.order.findMany({
+      where: {
+        companyId: id,
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+        company: {
+          clients: {
+            some: {
+              name: clientName,
+            },
+          },
+        },
+      },
+      select: {
+        products: {
+          select: {
+            productName: true,
+            quantity: true,
+          },
+        },
+        orderNumber: true,
+        totalAmount: true,
+        paidAmount: true,
+        status: true,
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return res.status(200).json(orders);
+  }
+
+  if (clientName !== undefined) {
+    const orders = await prisma.order.findMany({
+      where: {
+        companyId: id,
+        company: {
+          clients: {
+            some: {
+              name: clientName,
+            },
+          },
+        },
+      },
+      select: {
+        products: {
+          select: {
+            productName: true,
+            quantity: true,
+          },
+        },
+        orderNumber: true,
+        totalAmount: true,
+        paidAmount: true,
+        status: true,
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return res.status(200).json(orders);
+  }
+
+  if (startDate && endDate) {
+    const orders = await prisma.order.findMany({
+      where: {
+        companyId: id,
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+        company: {
+          clients: {
+            some: {
+              name: clientName,
+            },
+          },
+        },
+      },
+      select: {
+        products: {
+          select: {
+            productName: true,
+            quantity: true,
+          },
+        },
+        orderNumber: true,
+        totalAmount: true,
+        paidAmount: true,
+        status: true,
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return res.status(200).json(orders);
+  }
+
+  const orders = await prisma.order.findMany({
+    where: {
+      companyId: id,
+    },
+    select: {
+      products: {
+        select: {
+          productName: true,
+          quantity: true,
+        },
+      },
+      orderNumber: true,
+      totalAmount: true,
+      paidAmount: true,
+      status: true,
+      createdAt: true,
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+
+  return res.status(200).json(orders);
+};
+
+export const payOrder = async (req: Request, res: Response) => {
+  const paymentData = CreatePaymentSchema.parse(req.body);
+
+  const result = await prisma.$transaction(
+    async ctx => {
+      const actuelOrder = await ctx.order.findUnique({
+        where: {
+          orderNumber: paymentData.orderNumber,
+        },
+      });
+
+      if (!actuelOrder) {
+        throw new AppError('Aucune commande correspondante', 400);
+      }
+
+      const remainingAmount = actuelOrder.totalAmount - actuelOrder.paidAmount;
+
+      if (paymentData.amountPaid > remainingAmount) {
+        throw new AppError('Le montant dépasse le reste à payer', 400, [
+          { field: 'amountPaid', message: 'Montant invalide' },
+        ]);
+      }
+
+      const lastPayment = await ctx.payment.findFirst({
+        orderBy: {
+          paymentDate: 'desc',
+        },
+      });
+
+      let paymentNumber = '';
+
+      if (!lastPayment) {
+        paymentNumber = 'PAY-1';
+      } else {
+        paymentNumber = `PAY-${parseInt(lastPayment.paymentNumber.split('-')[1]) + 1}`;
+      }
+
+      const payement = await ctx.payment.create({
+        data: { ...paymentData, paymentNumber },
+      });
+
+      const paidAmount = actuelOrder.paidAmount + paymentData.amountPaid;
+
+      const order = await ctx.order.update({
+        where: {
+          orderNumber: paymentData.orderNumber,
+        },
+        data: {
+          paidAmount,
+          status: paidAmount === actuelOrder.totalAmount ? 'FINISH' : 'PARTIAL',
+        },
+        select: {
+          products: {
+            select: {
+              productName: true,
+              quantity: true,
+            },
+          },
+          orderNumber: true,
+          totalAmount: true,
+          paidAmount: true,
+          status: true,
+          createdAt: true,
+        },
+      });
+
+      return { payement, order };
+    },
+    { timeout: 10000 }
+  );
+
+  io.to(paymentData.companyId).emit('Created-payement', result.payement);
+
+  return res.status(201).json(result.order);
+};
+
+export const getPayment = async (req: Request, res: Response) => {
+  const { id: companyId } = QuerySchema.parse(req.query);
+
+  const payment = await prisma.payment.findMany({
+    where: {
+      companyId,
+    },
+  });
+
+  res.status(200).json(payment);
+};
+
+export const getPaymentStats = async (req: Request, res: Response) => {
+  const { id: companyId } = QuerySchema.parse(req.query);
+
+  const paymentAll = await prisma.payment.aggregate({
+    where: {
+      companyId,
+    },
+    _sum: { amountPaid: true },
+    _count: true,
+  });
+
+  const paymentECHEANCE = await prisma.payment.aggregate({
+    where: {
+      companyId,
+      type: 'ECHEANCE',
+    },
+    _count: true,
+  });
+
+  const paymentCOMPLET = await prisma.payment.aggregate({
+    where: {
+      companyId,
+      type: 'COMPLET',
+    },
+    _count: true,
+  });
+
+  const result = {
+    total: paymentAll._count || 0,
+    total_paid: paymentAll._sum.amountPaid || 0,
+    total_echeance: paymentECHEANCE._count || 0,
+    total_complet: paymentCOMPLET._count || 0,
+  };
+
+  res.status(200).json(result);
+};
