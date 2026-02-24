@@ -11,6 +11,10 @@ import { Server } from 'socket.io';
 import { verifyToken } from './config/jwt.config';
 import { IJwtPayload } from './types/auth';
 
+console.log('DATABASE_URL =', process.env.DATABASE_URL);
+console.log('JWT_SECRET =', process.env.JWT_SECRET);
+console.log('JWT_REFRESH_SECRET =', process.env.JWT_REFRESH_SECRET);
+
 // Create Express app
 const app = createExpressApp();
 
