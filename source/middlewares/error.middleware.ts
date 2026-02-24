@@ -2,12 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { ZodSchema, ZodError } from 'zod';
 import { AppError } from '../utils/app.error';
 
-export const errorHandler = (
-  err: Error,
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const errorHandler = (err: Error, req: Request, res: Response) => {
   let statusCode = 500;
   let message = "Une erreur inconnue s'est produite. Merci d'être patient!";
   let errors: unknown = undefined;
