@@ -16,19 +16,6 @@ interface EnvConfig {
     RATE_LIMIT_WINDOW_MS: number;
     RATE_LIMIT_MAX_REQUESTS: number;
 }
-/**
- * Validation et exportation des variables d'environnement
- */
-declare class Environment {
-    private config;
-    constructor();
-    private validateEnv;
-    get(): EnvConfig;
-    isDevelopment(): boolean;
-    isProduction(): boolean;
-    isTest(): boolean;
-}
-export declare const env: Environment;
-declare const _default: EnvConfig;
-export default _default;
+export declare const getEnv: () => EnvConfig;
+export {};
 //# sourceMappingURL=env.config.d.ts.map

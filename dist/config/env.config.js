@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.env = void 0;
+exports.getEnv = void 0;
 // import { config } from 'dotenv';
 const logger_1 = require("../utils/logger");
 const dotenv_1 = __importDefault(require("dotenv"));
@@ -61,6 +61,12 @@ class Environment {
         return this.config.NODE_ENV === 'test';
     }
 }
-exports.env = new Environment();
-exports.default = exports.env.get();
+let instance = null;
+const getEnv = () => {
+    if (!instance) {
+        instance = new Environment();
+    }
+    return instance.get();
+};
+exports.getEnv = getEnv;
 //# sourceMappingURL=env.config.js.map

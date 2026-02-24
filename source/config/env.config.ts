@@ -111,5 +111,11 @@ class Environment {
   }
 }
 
-export const env = new Environment();
-export default env.get();
+let instance: Environment | null = null;
+
+export const getEnv = () => {
+  if (!instance) {
+    instance = new Environment();
+  }
+  return instance.get();
+};

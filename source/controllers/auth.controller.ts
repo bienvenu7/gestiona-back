@@ -7,7 +7,9 @@ import { sendHash } from '../config/mailer.config';
 import { createToken, expiredAtFunc } from '../config/jwt.config';
 import { logger } from '../utils/logger';
 import { verify } from 'jsonwebtoken';
-import { env } from '../config/env.config';
+import { getEnv } from '../config/env.config';
+
+const envConfig = getEnv();
 import { IJwtPayload } from '../types/auth';
 
 export const loginUser = async (
@@ -130,7 +132,7 @@ export const refrehToken = async (
 
   const payload = verify(
     refreshToken,
-    env.get().JWT_REFRESH_SECRET
+    envConfig.JWT_REFRESH_SECRET
   ) as IJwtPayload;
 
   const accessToken = createToken(
@@ -140,7 +142,7 @@ export const refrehToken = async (
       userId: payload.userId,
       companyId: payload.companyId,
     },
-    env.get().JWT_SECRET,
+    envConfig.JWT_SECRET,
     60 * 60 * 8
   );
 

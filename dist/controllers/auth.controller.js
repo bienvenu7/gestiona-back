@@ -10,6 +10,7 @@ const jwt_config_1 = require("../config/jwt.config");
 const logger_1 = require("../utils/logger");
 const jsonwebtoken_1 = require("jsonwebtoken");
 const env_config_1 = require("../config/env.config");
+const envConfig = (0, env_config_1.getEnv)();
 const loginUser = async (req, res, next) => {
     const { email, password } = company_schema_1.loginUserSchema.parse(req.body);
     const hashPassword = (0, otp_1.hashOtp)(password);
@@ -87,13 +88,13 @@ const refrehToken = async (req, res, next) => {
     if (!refreshToken) {
         return next(new app_error_1.AppError("Vous n'êtes authentifié", 401));
     }
-    const payload = (0, jsonwebtoken_1.verify)(refreshToken, env_config_1.env.get().JWT_REFRESH_SECRET);
+    const payload = (0, jsonwebtoken_1.verify)(refreshToken, envConfig.JWT_REFRESH_SECRET);
     const accessToken = (0, jwt_config_1.createToken)({
         email: payload.email,
         role: payload.role,
         userId: payload.userId,
         companyId: payload.companyId,
-    }, env_config_1.env.get().JWT_SECRET, 60 * 60 * 8);
+    }, envConfig.JWT_SECRET, 60 * 60 * 8);
     return res.status(200).json({ accessToken });
 };
 exports.refrehToken = refrehToken;

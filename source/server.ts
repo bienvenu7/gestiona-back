@@ -1,12 +1,7 @@
-console.log('DATABASE_URL =', process.env.DATABASE_URL);
-console.log('JWT_SECRET =', process.env.JWT_SECRET);
-console.log('JWT_REFRESH_SECRET =', process.env.JWT_REFRESH_SECRET);
-
 import { createExpressApp, startServer, port, createHttpServer } from './app';
 import { applyMiddleware } from './middlewares/global.middleware';
 import { configureErrorHandling } from './config/error.config';
 import { configureProcessHandlers } from './config/proccessHandler.config';
-import envConfig from './config/env.config';
 import express from 'express';
 import path from 'path';
 import { configureRoutes } from './middlewares/routes';
@@ -14,6 +9,10 @@ import { prismaErrorHandler } from './config/db.config';
 import { Server } from 'socket.io';
 import { verifyToken } from './config/jwt.config';
 import { IJwtPayload } from './types/auth';
+
+import { getEnv } from './config/env.config';
+
+const envConfig = getEnv();
 
 // Create Express app
 const app = createExpressApp();

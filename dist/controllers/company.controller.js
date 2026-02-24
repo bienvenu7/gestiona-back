@@ -1,7 +1,4 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateUserStatus = exports.deleteUser = exports.getUsers = exports.createUser = exports.verifyHash = exports.registerCP = void 0;
 const company_schema_1 = require("../schema/company.schema");
@@ -9,10 +6,11 @@ const db_config_1 = require("../config/db.config");
 const app_error_1 = require("../utils/app.error");
 const otp_1 = require("../utils/otp");
 const mailer_config_1 = require("../config/mailer.config");
-const env_config_1 = __importDefault(require("../config/env.config"));
 const jwt_config_1 = require("../config/jwt.config");
 const logger_1 = require("../utils/logger");
 const gen_psd_1 = require("../utils/gen.psd");
+const env_config_1 = require("../config/env.config");
+const envConfig = (0, env_config_1.getEnv)();
 const registerCP = async (req, res, next) => {
     const { name, user } = company_schema_1.CreateCompanySchema.parse(req.body);
     const findExistingCp = await db_config_1.prisma.company.findFirst({
@@ -110,13 +108,13 @@ const verifyHash = async (req, res, next) => {
         role: user.role,
         userId: user.id,
         companyId: user.companyId,
-    }, env_config_1.default.JWT_SECRET, 60 * 60 * 8);
+    }, envConfig.JWT_SECRET, 60 * 60 * 8);
     const refreshToken = (0, jwt_config_1.createToken)({
         email,
         role: user.role,
         userId: user.id,
         companyId: user.companyId,
-    }, env_config_1.default.JWT_REFRESH_SECRET, 60 * 60 * 24 * 30);
+    }, envConfig.JWT_REFRESH_SECRET, 60 * 60 * 24 * 30);
     await db_config_1.prisma.session.create({
         data: {
             expiredAt: (0, jwt_config_1.expiredAtFunc)(60 * 60 * 24 * 30),

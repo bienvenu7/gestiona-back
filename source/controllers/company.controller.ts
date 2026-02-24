@@ -10,10 +10,13 @@ import { prisma } from '../config/db.config';
 import { AppError } from '../utils/app.error';
 import { generateOtp, hashOtp } from '../utils/otp';
 import { sendHash } from '../config/mailer.config';
-import envConfig from '../config/env.config';
 import { createToken, expiredAtFunc } from '../config/jwt.config';
 import { logger } from '../utils/logger';
 import { genPassword } from '../utils/gen.psd';
+
+import { getEnv } from '../config/env.config';
+
+const envConfig = getEnv();
 
 export const registerCP = async (
   req: Request,

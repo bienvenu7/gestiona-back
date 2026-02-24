@@ -1,8 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import envConfig from '../config/env.config';
 import { AppError } from '../utils/app.error';
 import { IJwtPayload } from '../types/auth';
 import { verifyToken } from '../config/jwt.config';
+
+import { getEnv } from '../config/env.config';
+
+const envConfig = getEnv();
 
 /**
  * Extension de Request pour inclure l'utilisateur
