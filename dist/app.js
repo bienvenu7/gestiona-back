@@ -3,11 +3,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.startServer = exports.createExpressApp = exports.port = void 0;
+exports.startServer = exports.createHttpServer = exports.createExpressApp = exports.port = void 0;
 exports.getPortFromArgs = getPortFromArgs;
 const express_1 = __importDefault(require("express"));
 const path_1 = __importDefault(require("path"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const http_1 = __importDefault(require("http"));
 dotenv_1.default.config();
 // Get port from command line arguments or environment
 function getPortFromArgs() {
@@ -28,6 +29,8 @@ const createExpressApp = () => {
     return app;
 };
 exports.createExpressApp = createExpressApp;
+const createHttpServer = (app) => http_1.default.createServer(app);
+exports.createHttpServer = createHttpServer;
 // Start server
 const startServer = (server, port) => {
     server.listen(port, () => {

@@ -12,11 +12,11 @@ async function sendHash(hash, email) {
     try {
         const transporter = nodemailer_1.default.createTransport({
             host: 'mail.hosting.reg.ru',
-            port: 587, // <-- Changed from 465
-            secure: false, // true pour 465, false pour 587 (TLS)
+            port: 465, // Port sécurisé (SSL)
+            secure: true, // true pour 465, false pour 587 (TLS)
             auth: {
                 user: 'noreply@afrue.com',
-                pass: '5768876587657',
+                pass: 'cN1eS3bQ1gyK7sD3',
             },
             tls: {
                 // 🔥 CRITIQUE POUR REG.RU
@@ -27,7 +27,6 @@ async function sendHash(hash, email) {
             connectionTimeout: 20000,
             greetingTimeout: 20000,
             socketTimeout: 20000,
-            debug: true, // Add this line
             logger: true,
         });
         // Send email

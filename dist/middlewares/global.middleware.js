@@ -64,7 +64,9 @@ exports.compressionConfig = (0, compression_1.default)({
 });
 // CORS configuration
 exports.corsConfig = (0, cors_1.default)({
-    origin: '*',
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
     optionsSuccessStatus: 200,
 });
@@ -90,6 +92,7 @@ const applyMiddleware = (app) => {
     app.use(body_parser_1.default.json({ limit: '50mb' }));
     app.use((0, cookie_parser_1.default)());
     app.use(exports.corsConfig);
+    app.options('*', exports.corsConfig);
     app.disable('x-powered-by');
     app.use(exports.helmetConfig);
 };

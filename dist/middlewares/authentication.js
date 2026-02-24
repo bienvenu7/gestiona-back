@@ -1,37 +1,35 @@
 "use strict";
-// import { Request, Response, NextFunction } from 'express';
-// import jwt, { sign } from 'jsonwebtoken';
-// import envConfig from '../config/env.config';
-// import { AppError } from '../utils/app.error';
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-// /**
-//  * Interface pour le payload JWT
-//  */
-// export interface JwtPayload {
-//   userId: string;
-//   companyId: string;
-//   role: string;
-//   email: string;
-// }
-// /**
-//  * Extension de Request pour inclure l'utilisateur
-//  */
-// declare global {
-//   // eslint-disable-next-line @typescript-eslint/no-namespace
-//   namespace Express {
-//     interface Request {
-//       user?: JwtPayload;
-//     }
-//   }
-// }
-// const accessToken = sign(
-//   { id: optCode.id },
-//   process.env.JWT_ACCESS_SECRET as string,
-//   { expiresIn: 60 * 60 * 8 }
-// );
-// const refreshToken = sign(
-//   { id: optCode.id },
-//   process.env.JWT_REFRESH_SECRET as string,
-//   { expiresIn: 60 * 60 * 24 * 30 }
-// );
+exports.isPermitted = exports.isAuhenticated = void 0;
+const env_config_1 = __importDefault(require("../config/env.config"));
+const app_error_1 = require("../utils/app.error");
+const jwt_config_1 = require("../config/jwt.config");
+const isAuhenticated = async (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+        return next(new app_error_1.AppError("Vous n'êtes pas autorisé!", 401));
+    }
+    const token = authHeader.replace('Bearer ', '');
+    try {
+        const payload = (0, jwt_config_1.verifyToken)(token, env_config_1.default.JWT_SECRET);
+        req.user = payload;
+        next();
+    }
+    catch {
+        return next(new app_error_1.AppError("Votre clé d'authentification n'est pas valide", 401));
+    }
+};
+exports.isAuhenticated = isAuhenticated;
+const isPermitted = async (req, res, next) => {
+    const { role } = req.user;
+    const requireRoles = ['OWNER', 'STAFF'];
+    if (!requireRoles.includes(role)) {
+        return next(new app_error_1.AppError("Vous n'êtes pas autorisé à éfectué cette tache!", 401));
+    }
+    next();
+};
+exports.isPermitted = isPermitted;
 //# sourceMappingURL=authentication.js.map
