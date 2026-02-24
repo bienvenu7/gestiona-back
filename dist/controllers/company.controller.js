@@ -10,7 +10,7 @@ const jwt_config_1 = require("../config/jwt.config");
 const logger_1 = require("../utils/logger");
 const gen_psd_1 = require("../utils/gen.psd");
 const env_config_1 = require("../config/env.config");
-const envConfig = (0, env_config_1.getEnv)();
+const envConfig = process.env.NODE_ENV !== 'production' ? (0, env_config_1.getEnv)() : process.env;
 const registerCP = async (req, res, next) => {
     const { name, user } = company_schema_1.CreateCompanySchema.parse(req.body);
     const findExistingCp = await db_config_1.prisma.company.findFirst({

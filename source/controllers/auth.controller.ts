@@ -9,7 +9,9 @@ import { logger } from '../utils/logger';
 import { verify } from 'jsonwebtoken';
 import { getEnv } from '../config/env.config';
 
-const envConfig = getEnv();
+const envConfig =
+  process.env.NODE_ENV !== 'production' ? getEnv() : process.env;
+
 import { IJwtPayload } from '../types/auth';
 
 export const loginUser = async (
@@ -132,7 +134,7 @@ export const refrehToken = async (
 
   const payload = verify(
     refreshToken,
-    envConfig.JWT_REFRESH_SECRET
+    envConfig.JWT_REFRESH_SECRET!
   ) as IJwtPayload;
 
   const accessToken = createToken(
@@ -142,7 +144,7 @@ export const refrehToken = async (
       userId: payload.userId,
       companyId: payload.companyId,
     },
-    envConfig.JWT_SECRET,
+    envConfig.JWT_SECRET!,
     60 * 60 * 8
   );
 

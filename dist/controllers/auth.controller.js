@@ -10,7 +10,7 @@ const jwt_config_1 = require("../config/jwt.config");
 const logger_1 = require("../utils/logger");
 const jsonwebtoken_1 = require("jsonwebtoken");
 const env_config_1 = require("../config/env.config");
-const envConfig = (0, env_config_1.getEnv)();
+const envConfig = process.env.NODE_ENV !== 'production' ? (0, env_config_1.getEnv)() : process.env;
 const loginUser = async (req, res, next) => {
     const { email, password } = company_schema_1.loginUserSchema.parse(req.body);
     const hashPassword = (0, otp_1.hashOtp)(password);

@@ -5,7 +5,8 @@ import { verifyToken } from '../config/jwt.config';
 
 import { getEnv } from '../config/env.config';
 
-const envConfig = getEnv();
+const envConfig =
+  process.env.NODE_ENV !== 'production' ? getEnv() : process.env;
 
 /**
  * Extension de Request pour inclure l'utilisateur
@@ -33,7 +34,7 @@ export const isAuhenticated = async (
   const token = authHeader.replace('Bearer ', '');
 
   try {
-    const payload = verifyToken(token, envConfig.JWT_SECRET);
+    const payload = verifyToken(token, envConfig.JWT_SECRET!);
     req.user = payload as IJwtPayload;
     next();
   } catch {

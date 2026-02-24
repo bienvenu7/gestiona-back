@@ -16,7 +16,8 @@ import { genPassword } from '../utils/gen.psd';
 
 import { getEnv } from '../config/env.config';
 
-const envConfig = getEnv();
+const envConfig =
+  process.env.NODE_ENV !== 'production' ? getEnv() : process.env;
 
 export const registerCP = async (
   req: Request,
@@ -158,7 +159,7 @@ export const verifyHash = async (
       userId: user!.id,
       companyId: user!.companyId,
     },
-    envConfig.JWT_SECRET,
+    envConfig.JWT_SECRET!,
     60 * 60 * 8
   );
   const refreshToken = createToken(
@@ -168,7 +169,7 @@ export const verifyHash = async (
       userId: user!.id,
       companyId: user!.companyId,
     },
-    envConfig.JWT_REFRESH_SECRET,
+    envConfig.JWT_REFRESH_SECRET!,
     60 * 60 * 24 * 30
   );
 

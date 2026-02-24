@@ -4,7 +4,7 @@ exports.isPermitted = exports.isAuhenticated = void 0;
 const app_error_1 = require("../utils/app.error");
 const jwt_config_1 = require("../config/jwt.config");
 const env_config_1 = require("../config/env.config");
-const envConfig = (0, env_config_1.getEnv)();
+const envConfig = process.env.NODE_ENV !== 'production' ? (0, env_config_1.getEnv)() : process.env;
 const isAuhenticated = async (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
