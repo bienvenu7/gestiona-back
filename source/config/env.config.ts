@@ -1,8 +1,13 @@
-import { config } from 'dotenv';
+// import { config } from 'dotenv';
 import { logger } from '../utils/logger';
 
+import dotenv from 'dotenv';
+
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
 // Charger les variables d'environnement
-config();
+// config();
 
 interface EnvConfig {
   // Application
