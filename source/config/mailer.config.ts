@@ -2,6 +2,7 @@ import nodemailer from 'nodemailer';
 import { logger } from '../utils/logger';
 // 🔥 OBLIGATOIRE
 // dns.setDefaultResultOrder('ipv4first');
+//ok
 
 export async function sendHash(hash: string, email: string) {
   try {
