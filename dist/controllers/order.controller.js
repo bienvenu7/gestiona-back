@@ -5,6 +5,7 @@ const company_schema_1 = require("../schema/company.schema");
 const db_config_1 = require("../config/db.config");
 const app_error_1 = require("../utils/app.error");
 const server_1 = require("../server");
+//
 const createOrder = async (req, res, next) => {
     const { carts, order } = company_schema_1.CreateOrderWithCart.parse(req.body);
     //verification du stock des produits

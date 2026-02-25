@@ -8,6 +8,7 @@ const nodemailer_1 = __importDefault(require("nodemailer"));
 const logger_1 = require("../utils/logger");
 // 🔥 OBLIGATOIRE
 // dns.setDefaultResultOrder('ipv4first');
+//ok
 async function sendHash(hash, email) {
     try {
         const transporter = nodemailer_1.default.createTransport({
@@ -29,6 +30,13 @@ async function sendHash(hash, email) {
             socketTimeout: 20000,
             logger: true,
         });
+        // const transporter = nodemailer.createTransport({
+        //   service: 'mail.ru',
+        //   auth: {
+        //     user: 'durel7@mail.ru',
+        //     pass: process.env.MAIL_RU_APP,
+        //   },
+        // });
         // Send email
         await transporter.sendMail({
             from: 'noreply@afrue.com',

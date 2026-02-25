@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.NotFoundError = exports.validateRequest = exports.errorHandler = void 0;
 const zod_1 = require("zod");
 const app_error_1 = require("../utils/app.error");
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res) => {
     let statusCode = 500;
     let message = "Une erreur inconnue s'est produite. Merci d'être patient!";
     let errors = undefined;
