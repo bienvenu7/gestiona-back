@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "SaaS multi-tenant de gestion de stock",
   "main": "dist/server.js",
+  "engines": {
+    "node": ">=22.18.0"
+  },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only source/server.ts",
     "build": "tsc",
