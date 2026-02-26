@@ -11,8 +11,8 @@ export async function sendHash(hash: string, email: string) {
       port: 465, // Port sécurisé (SSL)
       secure: true, // true pour 465, false pour 587 (TLS)
       auth: {
-        user: 'noreply@inventera.pro',
-        pass: 'Colomb2004/?',
+        user: 'noreply@afrue.com',
+        pass: 'cN1eS3bQ1gyK7sD3',
       },
       tls: {
         // 🔥 CRITIQUE POUR REG.RU
