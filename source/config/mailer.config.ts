@@ -36,7 +36,7 @@ export async function sendHash(hash: string, email: string) {
 
     // Send email
     await transporter.sendMail({
-      from: 'noreply@afrue.com',
+      from: 'noreply@inventera.pro',
       to: email,
       subject: 'En attente de validation',
       html: `Bonjour!<br/>le code de validation est : <strong>${hash}</strong>`,

@@ -51,7 +51,7 @@ const server = createHttpServer(app);
 //create io variable
 export const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:3000',
+    origin: 'https://www.inventera.pro',
     credentials: true,
     optionsSuccessStatus: 200,
   },
