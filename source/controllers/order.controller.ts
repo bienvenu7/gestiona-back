@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from 'express';
+import type { Request, Response } from 'express';
 import {
   CreateOrderWithCart,
   CreatePaymentSchema,
@@ -9,74 +9,80 @@ import { AppError } from '../utils/app.error';
 import { io } from '../server';
 
 //
-export const createOrder = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const createOrder = async (req: Request, res: Response) => {
   const { carts, order } = CreateOrderWithCart.parse(req.body);
 
   //verification du stock des produits
-
-  const findProducts = await prisma.product.findMany({
-    where: {
-      id: { in: carts.map(c => c.productId) },
-    },
-    select: {
-      id: true,
-      stockQuantity: true,
-      name: true,
-    },
-  });
-
-  const productMap = new Map(findProducts.map(p => [p.id, p]));
-
-  const invalidItem = carts.find(cart => {
-    const product = productMap.get(cart.productId);
-    return !product || cart.quantity > product.stockQuantity;
-  });
-
-  if (invalidItem) {
-    const product = productMap.get(invalidItem.productId);
-
-    return next(
-      new AppError(
-        `Nous n'avons plus assez de stock de ${product?.stockQuantity}`,
-        400
-      )
-    );
-  }
-
-  //creation de l'ordre
-
-  const orderNumber = new Date().getTime().toString();
-
-  const createOrder = await prisma.order.create({
-    data: {
-      ...order,
-      orderNumber,
-      products: {
-        createMany: { data: carts, skipDuplicates: true },
+  const result = await prisma.$transaction(async tx => {
+    // 1️⃣ Vérifier le stock dans la transaction
+    const products = await tx.product.findMany({
+      where: {
+        id: { in: carts.map(c => c.productId) },
       },
-    },
-    select: {
-      products: {
-        select: {
-          productName: true,
-          quantity: true,
+      select: {
+        id: true,
+        stockQuantity: true,
+        name: true,
+      },
+    });
+
+    const productMap = new Map(products.map(p => [p.id, p]));
+
+    const invalidItem = carts.find(cart => {
+      const product = productMap.get(cart.productId);
+      return !product || cart.quantity > product.stockQuantity;
+    });
+
+    if (invalidItem) {
+      throw new AppError('Stock insuffisant', 400);
+    }
+
+    // 2️⃣ Créer la commande
+    const orderNumber = new Date().getTime().toString();
+
+    const newOrder = await tx.order.create({
+      data: {
+        ...order,
+        orderNumber,
+        products: {
+          createMany: { data: carts },
         },
       },
-      orderNumber: true,
-      totalAmount: true,
-      paidAmount: true,
-      status: true,
-      createdAt: true,
-    },
+      select: {
+        products: {
+          select: {
+            productName: true,
+            quantity: true,
+          },
+        },
+        orderNumber: true,
+        totalAmount: true,
+        paidAmount: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+
+    // 3️⃣ Décrémenter le stock
+    for (const item of carts) {
+      await tx.product.update({
+        where: {
+          id: item.productId,
+        },
+        data: {
+          stockQuantity: {
+            decrement: item.quantity,
+          },
+        },
+      });
+    }
+
+    return newOrder;
   });
 
-  io.to(order.companyId).emit('order-created', createOrder);
+  io.to(order.companyId).emit('order-created', result);
 
-  return res.status(201).json(createOrder);
+  return res.status(201).json(result);
 };
 
 export const getCompanyOrders = async (req: Request, res: Response) => {
