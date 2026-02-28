@@ -1,4 +1,4 @@
-import type { Request, Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import {
   CreateOrderWithCart,
   CreatePaymentSchema,
@@ -9,7 +9,11 @@ import { AppError } from '../utils/app.error';
 import { io } from '../server';
 
 //
-export const createOrder = async (req: Request, res: Response) => {
+export const createOrder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { carts, order } = CreateOrderWithCart.parse(req.body);
 
   // 1️⃣ Vérifier le stock dans la transaction
@@ -32,7 +36,7 @@ export const createOrder = async (req: Request, res: Response) => {
   });
 
   if (invalidItem) {
-    throw new AppError('Stock insuffisant', 400);
+    return next(new AppError('Stock insuffisant', 400));
   }
 
   const result = await prisma.$transaction(async tx => {
