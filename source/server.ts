@@ -37,7 +37,10 @@ app.use('/health', (req, res) => {
 export const io = new Server(server, {
   cors: {
     // origin: 'https://www.inventera.pro',
-    origin: 'http://localhost:3000',
+    origin:
+      process.env.NODE_ENV !== 'production'
+        ? 'http://localhost:3000'
+        : 'https://www.inventera.pro',
     credentials: true,
     optionsSuccessStatus: 200,
   },
