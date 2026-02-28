@@ -36,7 +36,12 @@ export const createOrder = async (
   });
 
   if (invalidItem) {
-    return next(new AppError('Stock insuffisant', 400));
+    return next(
+      new AppError(
+        `${invalidItem.productName} en manque de stock insuffisant `,
+        400
+      )
+    );
   }
 
   const result = await prisma.$transaction(async tx => {
