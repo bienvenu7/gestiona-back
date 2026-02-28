@@ -15,7 +15,7 @@ import {
   QuerySchema,
   UpdateUserSchema,
 } from '../schema/company.schema';
-import { isAuhenticated } from '../middlewares/authentication';
+import { isAuhenticated, isPermitted } from '../middlewares/authentication';
 
 const router = express.Router();
 
@@ -29,6 +29,7 @@ router.post(
   '/create-user',
   isAuhenticated,
   validateRequest({ body: CreateUserFromOwner }),
+  isPermitted,
   createUser
 );
 
@@ -36,6 +37,7 @@ router.get(
   '/users',
   isAuhenticated,
   validateRequest({ query: QuerySchema }),
+  isPermitted,
   getUsers
 );
 
@@ -43,6 +45,7 @@ router.delete(
   '/delete-user',
   isAuhenticated,
   validateRequest({ query: QuerySchema }),
+  isPermitted,
   deleteUser
 );
 
@@ -50,6 +53,7 @@ router.patch(
   '/update-user',
   isAuhenticated,
   validateRequest({ query: QuerySchema, body: UpdateUserSchema }),
+  isPermitted,
   updateUserStatus
 );
 

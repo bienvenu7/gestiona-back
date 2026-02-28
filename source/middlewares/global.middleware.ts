@@ -71,7 +71,8 @@ export const compressionConfig: RequestHandler = compression({
 
 // CORS configuration
 export const corsConfig = cors({
-  origin: 'https://www.inventera.pro',
+  // origin: 'https://www.inventera.pro',
+  origin: 'http://localhost:3000',
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,

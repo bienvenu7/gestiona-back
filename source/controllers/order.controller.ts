@@ -74,7 +74,7 @@ export const createOrder = async (
     },
   });
 
-  io.to(`${order.companyId}`).emit('order-created', createOrder);
+  io.to(order.companyId).emit('order-created', createOrder);
 
   return res.status(201).json(createOrder);
 };
@@ -229,6 +229,16 @@ export const payOrder = async (req: Request, res: Response) => {
         throw new AppError('Aucune commande correspondante', 400);
       }
 
+      const clientData = await prisma.client.findUnique({
+        where: {
+          id: actuelOrder.clientId,
+        },
+      });
+
+      if (clientData === null) {
+        throw new AppError("Il y'a un probleme avec la commande...", 405);
+      }
+
       const remainingAmount = actuelOrder.totalAmount - actuelOrder.paidAmount;
 
       if (paymentData.amountPaid > remainingAmount) {
@@ -252,7 +262,12 @@ export const payOrder = async (req: Request, res: Response) => {
       }
 
       const payement = await ctx.payment.create({
-        data: { ...paymentData, paymentNumber },
+        data: {
+          ...paymentData,
+          paymentNumber,
+          clientPhone: clientData.number,
+          clientName: clientData.name,
+        },
       });
 
       const paidAmount = actuelOrder.paidAmount + paymentData.amountPaid;
@@ -291,15 +306,64 @@ export const payOrder = async (req: Request, res: Response) => {
 };
 
 export const getPayment = async (req: Request, res: Response) => {
-  const { id: companyId } = QuerySchema.parse(req.query);
+  const { id: companyId, startDate, endDate } = QuerySchema.parse(req.query);
+
+  if (startDate && endDate) {
+    const payment = await prisma.payment.findMany({
+      where: {
+        companyId,
+        paymentDate: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      orderBy: {
+        paymentDate: 'desc',
+      },
+    });
+    return res.status(200).json(payment);
+  }
+
+  if (startDate) {
+    const endDate = new Date(startDate);
+    endDate.setUTCHours(23, 59, 59, 999);
+    const payment = await prisma.payment.findMany({
+      where: {
+        companyId,
+        paymentDate: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      orderBy: {
+        paymentDate: 'desc',
+      },
+    });
+    return res.status(200).json(payment);
+  }
+
+  const now = new Date();
+
+  // Start of current month
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  // Start of next month
+  const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
   const payment = await prisma.payment.findMany({
     where: {
       companyId,
+      paymentDate: {
+        gte: startOfMonth,
+        lte: startOfNextMonth,
+      },
+    },
+    orderBy: {
+      paymentDate: 'desc',
     },
   });
 
-  res.status(200).json(payment);
+  return res.status(200).json(payment);
 };
 
 export const getPaymentStats = async (req: Request, res: Response) => {

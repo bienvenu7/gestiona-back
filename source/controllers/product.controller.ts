@@ -87,7 +87,7 @@ export const createManyProductfromXml = async (
     responseProducts = [...responseProducts, ...batch];
   }
 
-  io.to(`${companyId}`).emit('productsCreated', responseProducts);
+  io.to(companyId).emit('productsCreated', responseProducts);
 
   return res.status(201).json({
     message: 'Importation des produits reussies',

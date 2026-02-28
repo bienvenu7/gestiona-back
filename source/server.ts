@@ -6,16 +6,19 @@ import express from 'express';
 import path from 'path';
 import { configureRoutes } from './middlewares/routes';
 import { prismaErrorHandler } from './config/db.config';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { verifyToken } from './config/jwt.config';
 import { IJwtPayload } from './types/auth';
 
 import { getEnv } from './config/env.config';
+import { AppError } from './utils/app.error';
 
 const envConfig = getEnv();
 
 // Create Express app
 const app = createExpressApp();
+
+const server = createHttpServer(app);
 
 app.use(
   '/uploads',
@@ -28,6 +31,42 @@ app.use('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     environment: envConfig.NODE_ENV,
   });
+});
+
+//create io variable
+export const io = new Server(server, {
+  cors: {
+    // origin: 'https://www.inventera.pro',
+    origin: 'http://localhost:3000',
+    credentials: true,
+    optionsSuccessStatus: 200,
+  },
+});
+
+io.use((socket: Socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token;
+
+    if (!token) {
+      return next(new Error('Authentication error: Token missing'));
+    }
+
+    const decoded = verifyToken(token, envConfig.JWT_SECRET) as IJwtPayload;
+
+    if (!decoded.userId || !decoded.companyId) {
+      return next(
+        new AppError('Authentication error: Invalid token payload', 403)
+      );
+    }
+
+    socket.userId = decoded.userId;
+    socket.companyId = decoded.companyId;
+
+    next();
+  } catch (error) {
+    console.error('Socket auth error:', error);
+    new AppError('Authentication error: Invalid token payload', 403);
+  }
 });
 
 // Apply middleware
@@ -46,29 +85,19 @@ configureProcessHandlers();
 configureErrorHandling(app);
 
 //create http server
-const server = createHttpServer(app);
 
-//create io variable
-export const io = new Server(server, {
-  cors: {
-    origin: 'https://www.inventera.pro',
-    credentials: true,
-    optionsSuccessStatus: 200,
-  },
-});
+// io.use((socket, next) => {
+//   const token = socket.handshake.auth.token;
+//   const decoded = verifyToken(
+//     token as string,
+//     envConfig.JWT_SECRET
+//   ) as IJwtPayload;
 
-io.use((socket, next) => {
-  const token = socket.handshake.auth.token;
-  const decoded = verifyToken(
-    token as string,
-    envConfig.JWT_SECRET
-  ) as IJwtPayload;
+//   socket.userId = decoded.userId;
+//   socket.companyId = decoded.companyId;
 
-  socket.userId = decoded.userId;
-  socket.companyId = decoded.companyId;
-
-  next();
-});
+//   next();
+// });
 
 io.on('connection', socket => {
   const companyRoom = socket.companyId;

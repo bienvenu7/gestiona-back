@@ -13,6 +13,8 @@ export const QuerySchema = z.object({
   clientName: z.string().optional(),
   startDate: z.coerce.date().optional(),
   endDate: z.coerce.date().optional(),
+  userId: z.uuid().trim().optional(),
+  dateMonth: z.coerce.date().optional(),
 });
 
 // User Schema
@@ -112,6 +114,34 @@ export const CreateProductsByXml = CreateProductSchema.pick({
 export const UpdateProductSchema = CreateProductSchema.omit({
   companyId: true,
 }).partial();
+
+export const Salary = z.object({
+  id: z.uuid(),
+  companyId: z.uuid(),
+  userId: z.uuid(),
+  amount: z.number().positive(),
+  createdAt: z.coerce.date(),
+});
+
+export const Cost = z.object({
+  id: z.uuid(),
+  companyId: z.uuid(),
+  amount: z.number().positive(),
+  createdAt: z.coerce.date(),
+  comment: z.string().min(3),
+});
+
+export const CreateSalarySchema = Salary.pick({
+  companyId: true,
+  amount: true,
+  userId: true,
+});
+
+export const CreateCostSchema = Cost.pick({
+  amount: true,
+  companyId: true,
+  comment: true,
+});
 
 // Cart Schema
 export const CartSchema = z.object({

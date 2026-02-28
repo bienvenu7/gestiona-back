@@ -15,6 +15,7 @@ import { logger } from '../utils/logger';
 import { genPassword } from '../utils/gen.psd';
 
 import { getEnv } from '../config/env.config';
+import { io } from '../server';
 
 const envConfig =
   process.env.NODE_ENV !== 'production' ? getEnv() : process.env;
@@ -237,6 +238,8 @@ export const createUser = async (
     );
   }
 
+  io.to(userData.companyId).emit('new-user', user);
+
   return res.status(201).json(user);
 };
 
@@ -268,19 +271,26 @@ export const deleteUser = async (
 ) => {
   const { id } = QuerySchema.parse(req.query);
 
-  const { id: user_id, name } = await prisma.user.delete({
+  const {
+    id: user_id,
+    name,
+    companyId,
+  } = await prisma.user.delete({
     where: {
       id,
     },
     select: {
       id: true,
       name: true,
+      companyId: true,
     },
   });
 
   if (!user_id) {
     return next(new AppError("Une erreur inconnue s'est produite.", 405));
   }
+
+  io.to(companyId).emit('deleted-client', user_id);
 
   return res.status(201).json({
     message: `Vous venez de suprrimer l'utilisateur au nom de: ${name}`,
@@ -295,7 +305,11 @@ export const updateUserStatus = async (
   const { id } = QuerySchema.parse(req.query);
   const updateData = UpdateUserSchema.parse(req.body);
 
-  const { id: user_id, name: username } = await prisma.user.update({
+  const {
+    id: user_id,
+    name: username,
+    companyId,
+  } = await prisma.user.update({
     where: {
       id,
     },
@@ -303,12 +317,15 @@ export const updateUserStatus = async (
     select: {
       id: true,
       name: true,
+      companyId: true,
     },
   });
 
   if (!user_id) {
     return next(new AppError("Une erreur inconnue s'est produite.", 405));
   }
+
+  io.to(companyId).emit('updated-client', user_id);
 
   return res.status(201).json({
     message: `la modification de l'utilisateur ${username} a été effectué avec succèss.`,

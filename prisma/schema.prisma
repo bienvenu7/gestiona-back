@@ -21,6 +21,8 @@ model Company {
   orders    Order[]
   clients   Client[]
   createdAt DateTime  @default(now())
+  salaries  Salary[]
+  costs     Cost[]
 }
 
 model Session {
@@ -57,6 +59,17 @@ model User {
   role      Role
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  salaries  Salary[]
+}
+
+model Salary {
+  id        String   @id @unique @default(uuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  amount    Float
+  createdAt DateTime @default(now())
 }
 
 model Client {
@@ -81,20 +94,30 @@ model Product {
 }
 
 model Order {
-  id          String    @id @unique @default(uuid())
+  id          String          @id @unique @default(uuid())
   companyId   String
-  company     Company   @relation(fields: [companyId], references: [id])
+  company     Company         @relation(fields: [companyId], references: [id])
   totalAmount Float
   payments    Payment[]
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime        @default(now())
   products    Cart[]
   clientId    String
-  orderNumber String    @unique
+  orderNumber String          @unique
   credit      Credit?
-  status      Status    @default(WAITING)
-  paidAmount  Float     @default(0)
+  status      Status          @default(WAITING)
+  paidAmount  Float           @default(0)
+  delivery    DeliveredStatus @default(PENDING)
 
   @@index([clientId])
+}
+
+model Cost {
+  id        String   @id @unique @default(uuid())
+  comment   String
+  createdAt DateTime @default(now())
+  amount    Float
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
 }
 
 model Cart {
@@ -117,6 +140,10 @@ model Payment {
   paymentNumber String      @unique
   type          PaymentType @default(COMPLET)
   companyId     String
+  clientName    String
+  clientPhone   String
+
+  @@index([clientPhone])
 }
 
 model Credit {
@@ -155,4 +182,9 @@ enum Status {
   PARTIAL
   WAITING
   CANCEL
+}
+
+enum DeliveredStatus {
+  DELIVERD
+  PENDING
 }

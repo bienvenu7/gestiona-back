@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { CreateClientSchema, QuerySchema } from '../schema/company.schema';
 
 import { prisma } from '../config/db.config';
+import { io } from '../server';
 
 export const createNewClient = async (req: Request, res: Response) => {
   const { id: companyId } = QuerySchema.parse(req.query);
@@ -14,6 +15,8 @@ export const createNewClient = async (req: Request, res: Response) => {
       number,
     },
   });
+
+  io.to(companyId).emit('new-client', createClient);
 
   return res.status(201).json(createClient);
 };

@@ -1,6 +1,6 @@
 import express from 'express';
 import { validateRequest } from '../middlewares/error.middleware';
-import { isAuhenticated } from '../middlewares/authentication';
+import { isAuhenticated, isPermitted } from '../middlewares/authentication';
 import { CreateProductSchema, QuerySchema } from '../schema/company.schema';
 import {
   createManyProductfromXml,
@@ -16,6 +16,7 @@ router.post(
   isAuhenticated,
   upload.single('file'),
   validateRequest({ query: QuerySchema }),
+  isPermitted,
   createManyProductfromXml
 );
 
@@ -23,6 +24,7 @@ router.post(
   '/create-one',
   isAuhenticated,
   validateRequest({ body: CreateProductSchema }),
+  isPermitted,
   createOneProduct
 );
 
