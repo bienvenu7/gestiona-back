@@ -12,31 +12,30 @@ import { io } from '../server';
 export const createOrder = async (req: Request, res: Response) => {
   const { carts, order } = CreateOrderWithCart.parse(req.body);
 
-  //verification du stock des produits
+  // 1️⃣ Vérifier le stock dans la transaction
+  const products = await prisma.product.findMany({
+    where: {
+      id: { in: carts.map(c => c.productId) },
+    },
+    select: {
+      id: true,
+      stockQuantity: true,
+      name: true,
+    },
+  });
+
+  const productMap = new Map(products.map(p => [p.id, p]));
+
+  const invalidItem = carts.find(cart => {
+    const product = productMap.get(cart.productId);
+    return !product || cart.quantity > product.stockQuantity;
+  });
+
+  if (invalidItem) {
+    throw new AppError('Stock insuffisant', 400);
+  }
+
   const result = await prisma.$transaction(async tx => {
-    // 1️⃣ Vérifier le stock dans la transaction
-    const products = await tx.product.findMany({
-      where: {
-        id: { in: carts.map(c => c.productId) },
-      },
-      select: {
-        id: true,
-        stockQuantity: true,
-        name: true,
-      },
-    });
-
-    const productMap = new Map(products.map(p => [p.id, p]));
-
-    const invalidItem = carts.find(cart => {
-      const product = productMap.get(cart.productId);
-      return !product || cart.quantity > product.stockQuantity;
-    });
-
-    if (invalidItem) {
-      throw new AppError('Stock insuffisant', 400);
-    }
-
     // 2️⃣ Créer la commande
     const orderNumber = new Date().getTime().toString();
 
